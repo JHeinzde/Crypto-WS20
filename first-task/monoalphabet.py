@@ -1,3 +1,6 @@
+'''
+Author: Jonathan Heinz WS 2020
+'''
 import re
 
 
@@ -31,6 +34,33 @@ def main():
     print('Letter | Frequency (absolute) | Frequency (percentage)')
     for letter in filtered_list:
         print(letter[0] + ' | ' + str(letter[1]) + ' | ' + str(letter[1] / abs_count))
+
+    replacement_table = {
+        'T': 'E',
+        'X': 'T',
+        'D': 'A',
+        'F': 'O',
+        'K': 'H',
+        'J': 'D',
+        'G': 'S',
+        'I': 'Y',
+        'Y': 'I',
+        'R': 'C',
+        'H': 'R',
+        'W': 'P',
+        'E': 'L',
+        'P': 'B',
+        'A': 'U',
+        'M': 'W',
+        'C': 'G',
+        'Q': 'F',
+        'U': 'M',
+        'O': 'K',
+        'S': 'Y',
+        'B': 'Z',
+        'V': 'V'
+    }
+    print(string.translate(str.maketrans(replacement_table)))
 
 
 if __name__ == '__main__':

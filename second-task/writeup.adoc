@@ -1,0 +1,118 @@
+= Exercise Sheet 2
+
+== Task 2.1 (i)
+
+The first task was to calculate the latexmath:[\tau_{0}] that determines the
+length of the key used to encrypt text. latexmath:[\tau_{0}] is defined as the
+number where latexmath:[S_{\tau} = \sum_{i=0}^{25}q^{2}_{\tau,i}] is closest to 0.065
+the value for the english language.
+
+To do this I wrote a small python programm that does the following steps:
+
+. Read in the textfile provided
+. Sanitize the text. This is important to exclude any characters not encrypted
+by the chiffre
+. After sanitizing the text ist tokenized into groups of size latexmath:[\tau]
+. Then the frequency of every character was calculated for their respective position.
+For example when latexmath:[\tau = 3] the frequency for position 1 in the groups was calculated,
+by counting the frequency of all letters at the position 1 of every group created in step 3:
+XCA BFE XAC MEC = 2*X, 1*B, 1*M
+. After this latexmath:[S_{\tau}] was calculated for position 1 for every possible latexmath:[\tau]
+
+The code of the programm can be looked at in the following section:
+```
+'''
+Author: Jonathan Heinz WS 2020
+'''
+
+import re
+from functools import reduce
+from typing import Dict, List, Tuple
+
+letter_frequencies = {
+    'E': 0.1202,
+    'T': 0.0910,
+    'A': 0.0812,
+    'O': 0.0768,
+    'I': 0.0731,
+    'N': 0.0695,
+    'S': 0.0628,
+    'R': 0.0602,
+    'H': 0.0592,
+    'D': 0.0432,
+    'L': 0.0398,
+    'U': 0.0288,
+    'C': 0.0271,
+    'M': 0.0261,
+    'F': 0.0230,
+    'Y': 0.0211,
+    'W': 0.0209,
+    'G': 0.0203,
+    'P': 0.0182,
+    'B': 0.0149,
+    'V': 0.0111,
+    'K': 0.0069,
+    'X': 0.0017,
+    'Q': 0.0011,
+    'J': 0.0010,
+    'Z': 0.0007,
+}
+
+
+def read_file() -> str:
+    with open('02-1.txt') as f:
+        return f.read()
+
+
+def sanitize_text(string: str) -> str:
+    return re.sub(r'\s|\n|,|\.|\-|:|@|\'|[0-9]', '', string)
+
+
+def tokenize_into_groups(group_size: int, string: str):
+    groups = []
+    for i in range(0, len(string), group_size):
+        if i + group_size < len(string):
+            groups.append(string[i:i + group_size])
+        else:
+            groups.append(string[i:len(string)])
+    return groups
+
+
+def count_frequency_in_cipher_texts(ciphers_text_groups, group_size: int):
+    result = [{} for i in range(group_size)]
+    for group in ciphers_text_groups:
+        for i in range(len(group)):
+            result[i].setdefault(group[i], 0)
+            result[i][group[i]] += 1
+    return result
+
+
+def get_absolute_count(map_of_letters: Dict[str, int]):
+    items = list(map_of_letters.items())
+    items = map(lambda x: x[1], items)
+    return reduce(lambda x, y: x + y, items)
+
+
+def map_calc_frequencies(map_of_letters: Dict[str, str], absolute_count_for_map):
+    percent = map(lambda x: (x[0], x[1] / absolute_count_for_map), map_of_letters.items())
+    percent = map(lambda x: x[1], percent)
+    percent = map(lambda x: x * x, percent)
+    percent = reduce(lambda x, y: x + y, percent)
+    return percent
+
+def main():
+    string = read_file()
+    s_string = sanitize_text(string)
+    for i in range(1, 11):
+        frequency_count = count_frequency_in_cipher_texts(tokenize_into_groups(i, s_string), i)
+        abs_count = get_absolute_count(frequency_count[0])
+        print('Possible key length', i)
+        print(map_calc_frequencies(frequency_count[0], abs_count))
+    ### 6 is the group_number with the closest coincidence index to 0.065 ###
+
+
+if __name__ == '__main__':
+    main()
+
+```
+
