@@ -1,3 +1,4 @@
+:stem: latexmath
 = Exercise Sheet 2
 
 == Task 2.1 (i)
@@ -20,7 +21,111 @@ XCA BFE XAC MEC = 2*X, 1*B, 1*M
 . After this latexmath:[S_{\tau}] was calculated for position 1 for every possible latexmath:[\tau]
 
 The code of the programm can be looked at in the following section:
+```python
+'''
+Author: Jonathan Heinz WS 2020
+'''
+
+import re
+from functools import reduce
+from typing import Dict, List, Tuple
+
+def read_file() -> str:
+    with open('02-1.txt') as f:
+        return f.read()
+
+
+def sanitize_text(string: str) -> str:
+    return re.sub(r'\s|\n|,|\.|\-|:|@|\'|[0-9]', '', string)
+
+
+def tokenize_into_groups(group_size: int, string: str):
+    groups = []
+    for i in range(0, len(string), group_size):
+        if i + group_size < len(string):
+            groups.append(string[i:i + group_size])
+        else:
+            groups.append(string[i:len(string)])
+    return groups
+
+
+def count_frequency_in_cipher_texts(ciphers_text_groups, group_size: int):
+    result = [{} for i in range(group_size)]
+    for group in ciphers_text_groups:
+        for i in range(len(group)):
+            result[i].setdefault(group[i], 0)
+            result[i][group[i]] += 1
+    return result
+
+
+def get_absolute_count(map_of_letters: Dict[str, int]):
+    items = list(map_of_letters.items())
+    items = map(lambda x: x[1], items)
+    return reduce(lambda x, y: x + y, items)
+
+
+def map_calc_frequencies(map_of_letters: Dict[str, str], absolute_count_for_map):
+    percent = map(lambda x: (x[0], x[1] / absolute_count_for_map), map_of_letters.items())
+    percent = map(lambda x: x[1], percent)
+    percent = map(lambda x: x * x, percent)
+    percent = reduce(lambda x, y: x + y, percent)
+    return percent
+
+def main():
+    string = read_file()
+    s_string = sanitize_text(string)
+    for i in range(1, 11):
+        frequency_count = count_frequency_in_cipher_texts(tokenize_into_groups(i, s_string), i)
+        abs_count = get_absolute_count(frequency_count[0])
+        print('Possible key length', i)
+        print(map_calc_frequencies(frequency_count[0], abs_count))
+
+
+if __name__ == '__main__':
+    main()
+
 ```
+
+This programm outputs the following:
+
+```
+Possible key length 1
+0.043033962607515394
+Possible key length 2
+0.04772255656011384
+Possible key length 3
+0.04958049886621316
+Possible key length 4
+0.047437641723356024
+Possible key length 5
+0.04654824892920129
+Possible key length 6
+0.06743764172335599
+Possible key length 7
+0.04746913580246913
+Possible key length 8
+0.05479891043102065
+Possible key length 9
+0.05561224489795919
+Possible key length 10
+0.05215419501133786
+```
+
+We can observer, that 6 is the latexmath:[\tau] with the smallest distance to 0.065!
+From now on we will operate under the assumption that our latexmath:[\tau_{0}=6].
+
+== Task 2.1 (ii)
+
+With the assumption above we can now go ahead and calculate the possible key letters latexmath:[k_a \in \{0,1,2,...,25\}].
+To do this we now also count the frequencies of every letter at each offset latexmath:[a \in \{0, 1, 2, ..., \tau_0 - 1\}].
+So in our case we need to calculate the frequencies for each position 0 - 5. After we have the frequencies we can employ
+the following strategy to calculate the numbers: Take a frequency table for the "real" english language. Multiply the
+frequency of the "real" letter with the one from our text and sum these up. When the result is near 0.065 we can stop,
+since we probably have found our key letter. If it is not. We "shift" the letters in our frequency back by subtracting our
+guess for latexmath:[k_a] from the letter. We then repeat the calculation of our sum until we have found the key letter.
+
+This process was partially automated by the following programm:
+```python
 '''
 Author: Jonathan Heinz WS 2020
 '''
@@ -100,6 +205,30 @@ def map_calc_frequencies(map_of_letters: Dict[str, str], absolute_count_for_map)
     percent = reduce(lambda x, y: x + y, percent)
     return percent
 
+
+def shift_cipher_text(offset_a: int, letter_distribution: Dict[str, int]) -> List[Tuple[str, int]]:
+    new_letter_distribution = []
+    for letter in letter_distribution.items():
+        new_letter_distribution.append((shift_letter(letter, offset_a), letter[1]))
+    return new_letter_distribution
+
+
+def shift_letter(letter, offset_a: int):
+    ascii_code = ord(letter[0])
+    ascii_code = ascii_code - 65  # Normalize to the range of 0, 25
+    ascii_code = ascii_code - offset_a  # Subtract offset from the letter number
+    ascii_code = ascii_code % 26  # Rectify any possible overflows
+    ascii_code = ascii_code + 65  # denormalize to be able to reconvert into a char
+    return chr(ascii_code)
+
+
+def calc_coincidence_index(map_of_letters_items, absolute_count_for_map):
+    percent = map(lambda x: (x[0], x[1] / absolute_count_for_map), map_of_letters_items)
+    percent = map(lambda x: (letter_frequencies[x[0]], x[1]), percent)
+    percent = map(lambda x: x[0] * x[1], percent)
+    return reduce(lambda x, y: x + y, percent)
+
+
 def main():
     string = read_file()
     s_string = sanitize_text(string)
@@ -109,10 +238,232 @@ def main():
         print('Possible key length', i)
         print(map_calc_frequencies(frequency_count[0], abs_count))
     ### 6 is the group_number with the closest coincidence index to 0.065 ###
+    all_counts = count_frequency_in_cipher_texts(tokenize_into_groups(6, s_string), 6)
+
+    for count in all_counts:
+        print('-----')
+        for i in range(26):
+            shifted_letters = shift_cipher_text(i, count)
+            print(chr(i + 65), calc_coincidence_index(shifted_letters, get_absolute_count(count)))
+        print('-----')
+    # Key is GEHEIM.
 
 
 if __name__ == '__main__':
     main()
+```
+
+This programm outputs the following sections for the different offsets latexmath:[a]:
 
 ```
+----- a = 0
+A 0.03829333333333332
+B 0.032749047619047615
+C 0.04491
+D 0.03534190476190476
+E 0.03286523809523809
+F 0.03865571428571427
+G 0.06399095238095237 <--- Nearest to 0.065
+H 0.0384242857142857
+I 0.03127619047619047
+J 0.03294428571428572
+K 0.040045238095238085
+L 0.03569095238095237
+M 0.03543428571428572
+N 0.04130809523809525
+O 0.03495190476190477
+P 0.037604761904761905
+Q 0.03486142857142857
+R 0.04725809523809524
+S 0.03992047619047619
+T 0.04177333333333333
+U 0.03266428571428571
+V 0.04523238095238095
+W 0.03671285714285714
+X 0.03298000000000001
+Y 0.03402380952380953
+Z 0.03998714285714286
+-----
+----- a = 1
+A 0.04819857142857144
+B 0.035063333333333335
+C 0.03331666666666667
+D 0.03818666666666666
+E 0.06385857142857142  <--- Nearest to 0.065
+F 0.03569523809523809
+G 0.03321380952380952
+H 0.034355714285714274
+I 0.040033809523809534
+J 0.030638571428571428
+K 0.036302380952380954
+L 0.04413857142857142
+M 0.032569999999999995
+N 0.0353104761904762
+O 0.036269047619047624
+P 0.04525999999999999
+Q 0.038873333333333336
+R 0.0434252380952381
+S 0.03869809523809523
+T 0.04218761904761905
+U 0.03669571428571428
+V 0.030100000000000002
+W 0.0372452380952381
+X 0.039311904761904756
+Y 0.037331904761904754
+Z 0.03361952380952381
+-----
+----- a = 2
+A 0.0361452380952381
+B 0.03733333333333333
+C 0.03024809523809524
+D 0.04120190476190476
+E 0.03434095238095239
+F 0.03317714285714285
+G 0.03965666666666665
+H 0.06296619047619048 <--- Nearest to 0.065
+I 0.043874761904761896
+J 0.0306447619047619
+K 0.03283714285714285
+L 0.04271285714285714
+M 0.03765666666666667
+N 0.03591142857142858
+O 0.040504761904761905
+P 0.031170952380952376
+Q 0.033249523809523805
+R 0.03602904761904761
+S 0.04621333333333334
+T 0.04007999999999999
+U 0.04021904761904761
+V 0.03857761904761905
+W 0.044263333333333335
+X 0.040720000000000006
+Y 0.035044761904761905
+Z 0.03512047619047619
+-----
+----- a = 3
+A 0.044893809523809516
+B 0.03467904761904762
+C 0.03055428571428571
+D 0.038183333333333326
+E 0.06440333333333335 <--- Nearest to 0.065
+F 0.03902714285714286
+G 0.032445238095238096
+H 0.034216666666666666
+I 0.04179904761904761
+J 0.03204190476190476
+K 0.037506666666666674
+L 0.04071428571428571
+M 0.03377380952380952
+N 0.032650000000000005
+O 0.037439047619047615
+P 0.04549571428571428
+Q 0.040414761904761905
+R 0.04044
+S 0.03842142857142857
+T 0.04512999999999999
+U 0.040324761904761905
+V 0.030359047619047612
+W 0.035943809523809524
+X 0.03981380952380952
+Y 0.03658571428571428
+Z 0.03264333333333333
+-----
+----- a = 4
+A 0.03765502392344498
+B 0.04057272727272727
+C 0.03704545454545454
+D 0.03182200956937798
+E 0.043387559808612454
+F 0.031576555023923446
+G 0.03178133971291865
+H 0.04384880382775121
+I 0.06131052631578947 <--- Nearest to 0.065
+J 0.0376755980861244
+K 0.03217894736842105
+L 0.03494162679425837
+M 0.03866602870813396
+N 0.03542535885167464
+O 0.03468133971291867
+P 0.04366315789473684
+Q 0.03424401913875598
+R 0.03783014354066986
+S 0.03481578947368422
+T 0.04416172248803827
+U 0.040828708133971305
+V 0.042444976076555015
+W 0.03740765550239234
+X 0.04220813397129187
+Y 0.036901435406698574
+Z 0.032825358851674646
+-----
+----- a = 5
+A 0.03611770334928229
+B 0.0469688995215311
+C 0.038685167464114836
+D 0.034644497607655506
+E 0.03599665071770335
+F 0.04141722488038277
+G 0.03562775119617225
+H 0.02977846889952153
+I 0.041089952153110045
+J 0.03313062200956938
+K 0.03434736842105264
+L 0.037559330143540674
+M 0.06439617224880381 <--- Nearest to 0.065
+N 0.03932775119617226
+O 0.03412488038277512
+P 0.031590430622009565
+Q 0.04237368421052631
+R 0.035187081339712926
+S 0.037406698564593305
+T 0.039211004784689
+U 0.034084210526315786
+V 0.03260717703349282
+W 0.03252535885167465
+X 0.045285645933014367
+Y 0.04175885167464114
+Z 0.04465741626794258
+-----
+
+```
+
+The key extracted from this is "GEHEIM". I then used this key to decrypt the ciphertext:
+
+```
+THE LAST QUESTION WAS ASKED FOR THE FIRST TIME, HALF IN JEST, ON MAY 21, 2061, AT A TIME WHEN HUMANITY FIRST STEPPED INTO THE LIGHT. THE QUESTION CAME ABOUT AS A RESULT OF A FIVE-DOLLAR BET OVER HIGHBALLS, AND IT HAPPENED THIS WAY:
+
+ALEXANDER ADELL AND BERTRAM LUPOV WERE TWO OF THE FAITHFUL ATTENDANTS OF MULTIVAC. AS WELL AS ANY HUMAN BEINGS COULD, THEY KNEW WHAT LAY BEHIND THE COLD, CLICKING, FLASHING FACE -- MILES AND MILES OF FACE -- OF THAT GIANT COMPUTER. THEY HAD AT LEAST A VAGUE NOTION OF THE GENERAL PLAN OF RELAYS AND CIRCUITS THAT HAD LONG SINCE GROWN PAST THE POINT WHERE ANY SINGLE HUMAN COULD POSSIBLY HAVE A FIRM GRASP OF THE WHOLE.
+
+MULTIVAC WAS SELF-ADJUSTING AND SELF-CORRECTING. IT HAD TO BE, FOR NOTHING HUMAN COULD ADJUST AND CORRECT IT QUICKLY ENOUGH OR EVEN ADEQUATELY ENOUGH. SO ADELL AND LUPOV ATTENDED THE MONSTROUS GIANT ONLY LIGHTLY AND SUPERFICIALLY, YET AS WELL AS ANY MEN COULD. THEY FED IT DATA, ADJUSTED QUESTIONS TO ITS NEEDS AND TRANSLATED THE ANSWERS THAT WERE ISSUED. CERTAINLY THEY, AND ALL OTHERS LIKE THEM, WERE FULLY ENTITLED TO SHARE IN THE GLORY THAT WAS MULTIVAC'S.
+
+FOR DECADES, MULTIVAC HAD HELPED DESIGN THE SHIPS AND PLOT THE TRAJECTORIES THAT ENABLED MAN TO REACH THE MOON, MARS, AND VENUS, BUT PAST THAT, EARTH'S POOR RESOURCES COULD NOT SUPPORT THE SHIPS. TOO MUCH ENERGY WAS NEEDED FOR THE LONG TRIPS. EARTH EXPLOITED ITS COAL AND URANIUM WITH INCREASING EFFICIENCY, BUT THERE WAS ONLY SO MUCH OF BOTH.
+
+BUT SLOWLY MULTIVAC LEARNED ENOUGH TO ANSWER DEEPER QUESTIONS MORE FUNDAMENTALLY, AND ON MAY 14, 2061, WHAT HAD BEEN THEORY, BECAME FACT.
+```
+
+== Task 2.2
+
+In terms of perfect secrecy this does not seem like an improvement. The following Lemma from our lectures states:
+
+```
+If (KeyGen,Enc,Dec) is perfectly secret then #K >= #M
+```
+
+For the "normal" OTP the following statement is true: latexmath:[M=K=C] which fulfills the above statement. Furthermore
+latexmath:[K = \{0,1\}^k], latexmath:[M = \{0,1\}^k], latexmath:[C = \{0,1\}^k]. There for the sizes of each of these
+sets are the same => latexmath:[\#K = \#M = \#C]. If we now exclude latexmath:[0^k] from the set of possible keys this 
+is no longer true, because now the set latexmath:[K^{'} = K \setminus 0^k ] has the following property: latexmath:[\#K^{'} = \#K - 1].
+Now the following statement its true: latexmath:[\#M > \#K^{'}], because the key set latexmath:[K^{'}] now is one
+smaller than the set of messages. Because of this the relation stated in the lemma above no longer holds. Since
+this lemma does no longer hold the new scheme that excludes latexmath:[0^k] from the set of possible keys is longer
+perfectly secret.
+
+To answer the second question we consider the following part from the equations above: latexmath:[M=C]. So the set
+of possible messages is equal to the set of possible cipher texts. Even if the message latexmath:[m] would be encrypted
+with latexmath:[0^k] the attacker cannot assume that this is the "real" message, because the set of possible ciphertexts
+includes any real text latexmath:[t] with the same length as latexmath:[m]. This means that this could also be just the
+result of encrypting a different message with the same length latexmath:[m^{'}] with a different key latexmath:[k^{'}].
+
+
+
 

@@ -1,0 +1,6 @@
+**/*.png
+**/*.pdf
+**/*.html
+
+.idea
+.bin
