@@ -123,3 +123,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+#docker run --rm -it --privileged -u $(id -u):$(id -g) -v `pwd`:/documents asciidoctor/docker-asciidoctor \
+#asciidoctor-pdf -a stem -r asciidoctor-mathematical writeup.adoc

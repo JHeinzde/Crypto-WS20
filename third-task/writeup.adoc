@@ -1,0 +1,53 @@
+:stem: latexmath
+= Exercise Sheet
+
+== Task 3.1
+
+From the exercise statement we have the following conditions: latexmath:[m,m^{\prime} \in M] for all probability distributions over latexmath:[M] and latexmath:[c,c^{\prime} \in C] with latexmath:[prob(C=c \land C=c') > 0]:
+
+latexmath:[prob(M=m \land M'=m'|C=c \land C'=c') = prob(M=m \land M'=m')]
+
+latexmath:[m] and latexmath:[m'] are sampled from the same distribution over latexmath:[M] and latexmath:[C=Enc_K(M),C'=Enc_K(M'),K=KeyGen()]
+
+Since this should be valid for all distributions over latexmath:[M] we take the uniform distribution over latexmath:[M] and chose
+latexmath:[m \neq m'] for latexmath:[m,m' \in M]. Also let latexmath:[c=c'] such that latexmath:[prob(C=c \land C'=c) > 0]
+
+If we assume that then latexmath:[prob(M=m \land M'=m'|C=c \land C'=c) = 0]. This is because latexmath:[Dec_K(Enc_K(m)) = m]. Because
+of the correctness requirement of encryption we cannot have a ciphertext that maps two multiple different messages.
+Since the definition from the exercise does not forbid us from making above assumptions about latexmath:[m,m'] and latexmath:[c,c']
+we can deduct that the definition cannot be true for any encryption scheme, because of the resulting equation:
+
+latexmath:[prob(M=m \land M'=m') = \frac{1}{|M|^{2}} \neq 0  = prob(M=m \land M'=m'|C=c \land C'=c)],
+
+Since this statement directly contradicts the definition above we showed that no encryption scheme that fulfills our correctness requirement
+can simultaneously fulfill the definition of perfect secrecy of two messages.
+
+== Task 3.2
+
+
+|===
+| f | latexmath:[\frac{1}{\sqrt{log_2log_2n}}] | latexmath:[n^{-sin^{3}n}] |latexmath:[n^{3}2^{-n}] |latexmath:[\frac{log_2^{7}n}{n^2}] |latexmath:[2^{-n^3}] | latexmath:[2^{-\frac{1}{\sqrt{n}}}] | latexmath:[2^{-\frac{log_2n}{log_2log_2n}}] |latexmath:[2^{-\frac{log_2n}{sin^2n}}]
+
+| negligible
+| no
+| no
+| yes
+| no
+| yes
+| no
+| no
+| no
+
+| non-significant
+| no
+| no
+| yes
+| no
+| yes
+| no
+| no
+| yes
+|===
+
+
+
