@@ -1,0 +1,92 @@
+:stem: latexmath
+
+= Exercise Sheet 4
+
+== Task 4.1(i)
+
+Given is the following table for the generator latexmath:[G]:
+
+|===
+|latexmath:[s] | latexmath:[G(s)]
+
+| 000
+| 000000
+
+| 001
+| 010001
+
+| 010
+| 111001
+
+| 011
+| 101110
+
+| 100
+| 010111
+
+| 101
+| 101101
+
+| 110
+| 110011
+
+| 111
+| 010100
+|===
+
+latexmath:[D]: return 1 if latexmath:[\textrm{bit}_0] of latexmath:[w] and latexmath:[\textrm{bit}_2] of w are equal.
+
+This would accept column 1,5,6 under the assumption that latexmath:[bit_0] begins on the right hand side. This translates to a probability of  latexmath:[prob(D(G(s)) = 1) = \frac{3}{8}].
+In general the probability of two bits being one is latexmath:[\frac{1}{4}]. The probability for the first bit does not "matter"
+ and the second bit has then the probability of latexmath:[\frac{1}{2}] to be of the same value as the first
+
+So with latexmath:[adv_G(D)=\frac{1}{2}|prob(D(G(s)) = 1) - prob(D(r) = 1)|] this is
+latexmath:[\frac{1}{2}|\frac{3}{8} - \frac{1}{2}| = \frac{1}{16}].
+So the distinguisher has that advantage.
+
+== Task 4.1(ii)
+
+If we take the Distinguisher latexmath:[D] that outputs 1 when the input latexmath:[w] has an even amount of 1 bits, we get that latexmath:[D] would output 1 for all bit strings latexmath:[w] above.
+The amount of bit strings latexmath:[r]
+for which it would output 1 is equal to the following
+
+latexmath:[P(\textrm{random string of length 6 has even amount of 1s}) = ({6\choose0} + {6\choose2} + {6\choose4} + {6\choose6})\cdot \frac{1}{2}^6 = \frac{1}{2} ]
+latexmath:[P(\textrm{random string of length 6 has odd amount of 1s}) = ({6\choose1} + {6\choose3} + {6\choose5})\cdot \frac{1}{2}^6 = \frac{1}{2} ].
+
+With this the latexmath:[adv_G(D)] would be latexmath:[\frac{1}{2}\cdot |1 - \frac{1}{2}| = \frac{1}{4}]
+
+== Task 4.2
+
+In this game D guesses if the output is either PRG or not.
+If we map this to the following definition from the lectures:
+latexmath:[adv_G(D)=\frac{1}{2}|prob(D(G(s)) = 1) - prob(D(r) = 1)|] we get the following properties:
+
+The case latexmath:[prob(D(G(s)) = 1)] maps to latexmath:[prob(G^{PRG}(D) = ACCEPT | h_{PRG} = 0)].
+This is because in the game when latexmath:[h_{PRG} = 0] The distinguisher gets latexmath:[w_0] which is latexmath:[G(s)].
+The 1 that latexmath:[D] outputs in the lecture definition corresponds to him selecting  latexmath:[h'_{PRG} = 0] in this case, because he guesses it is the output of the pseudo-random-generator latexmath:[G].
+Similarly the latexmath:[prob(D(r) = 1)] maps to latexmath:[prob(G^{PRG}(D) = REJECT | h_{PRG} = 1)].
+If latexmath:[D(r) = 1] then the distinguisher says the output comes from the generator.
+That means in the game latexmath:[h_{PRG} = 1], because that is the index of the random bit string latexmath:[r], but the distinguisher outputs latexmath:[h'_{PRG} = 0] because he guesses it comes from the generator.
+
+It gets a little more obvious when we change the order in which latexmath:[w_0] and latexmath:[w_1] are chosen: 
+so latexmath:[\text{1. Pick r <-(random)}  \{0,1\}^{k},w_0 <- r] and latexmath:[\text{2. Pick s <-(random)}  \{0,1\}^{k},w_1 <- G(s)]
+If we do this we get the following (latexmath:[h_{PRG}] is "inverted" to above, because we changed the order of the steps):
+
+latexmath:[prob(D(G(s)) = 1) = prob(G^{PRG}(D) = ACCEPT | h_{PRG} = 1)]
+latexmath:[prob(D(r) = 1) = prob(G^{PRG}(D) = REJECT | h_{PRG} = 0)].
+
+If we now replace these probabilities in the definition from the lecture we get:
+
+latexmath:[adv_G^{PRG}(D)=\frac{1}{2}|prob(G^{PRG}(D) = ACCEPT | h_{PRG} = 1) - prob(G^{PRG}(D) = REJECT | h_{PRG} = 0)|]
+Now we can use the proof technique that we used in the IND-POA game:
+
+latexmath:[adv_G^{PRG}(D)=\frac{1}{2}|prob(G^{PRG}(D) = ACCEPT | h_{PRG} = 1) - prob(G^{PRG}(D) = REJECT | h_{PRG} = 0)| \\
+= |prob(G^{PRG}(D) = ACCEPT | h_{PRG} = 1)\cdot  prob(h_{PRG} = 1) - prob(G^{PRG}(D) = REJECT | h_{PRG} = 0)\cdot prob(h_{PRG} = 0)| \\
+= |prob(G^{PRG}(D) = ACCEPT | h_{PRG} = 1)\cdot  prob(h_{PRG} = 1) - (1 - prob(G^{PRG}(D) = ACCEPT | h_{PRG} = 0))\cdot prob(h_{PRG} = 0)| \\
+= |prob(G^{PRG}(D) = ACCEPT \land h_{PRG} = 1) - (\frac{1}{2} - prob(G^{PRG}(D) = ACCEPT \land h_{PRG} = 0)| \\
+= |prob(G^{PRG}(D) = ACCEPT) - \frac{1}{2}|]
+
+With this we get the latexmath:[adv] of the exercise.
+This also shows that the definition of the lecture and the definition of the exercise are equal to each other.
+
+

@@ -1,0 +1,111 @@
+:stem: latexmath
+
+= Exercise Sheet 5
+
+== Task 5.1
+
+In the following subtask I will refer to the encryption scheme described in the exercise statement
+as latexmath:[\Pi]
+
+== Task 5.1 (i)
+
+This follows directly from 5.1 (iii) with the following proof:
+
+Construct a IND-POA attacker that tries to win the IND-POA game via an attacker in the OW-POA game:
+
+Assume we have an attacker latexmath:[A'] that can beat the OW-POA game, we can construct the following attacker latexmath:[A] for the IND-POA game:
+
+Generate two messages latexmath:[m_0=0^{k}], latexmath:[m_1=1^{k}].
+Give latexmath:[m_0] and latexmath:[1^{k}](security parameter not the message) to latexmath:[A'].
+If the result of latexmath:[A'] is latexmath:[m_0] then return 0 else return 1.
+
+Assuming latexmath:[A'] has a non negligible probability to win the game we also have a non negligible probability to win the game.
+Our advantage then is latexmath:[adv=|nonneg-\frac{1}{2}|] and so it is not negligible. Also if latexmath:[A'] is polynomial latexmath:[A] is polynomial.
+
+This proves that in order for our encryption scheme latexmath:[\Pi] to be IND-POA secure it must be also OW-POA secure.
+So if latexmath:[G(k)] is a good generator latexmath:[\Pi] is IND-POA secure (as proven in 5.1 (iii)).
+With this it is also automatically OW-POA secure.
+So yes it can be OW-POA if latexmath:[G(k)] is a good generator.
+
+== Task 5.1 (ii)
+
+No this particular scheme cant be OW-CPA secure:
+
+The attacker latexmath:[A] can do the following:
+
+Choose latexmath:[m_0=0^{k}], latexmath:[m_1=1^{k}].
+Call latexmath:[c^{*}=O_{Test}(m_0,m_1)].
+Calculate latexmath:[c_{0}=O_{\text{Enc}}(m_0)].
+If latexmath:[c_0=c^{*}] return latexmath:[m_0] else return
+latexmath:[m_1] this Attacker has latexmath:[adv^{\text{OW-CPA}}(A)=\frac{1}{2}]
+
+This algorithm is always polynomial, since it calls each oracle only once and otherwise does only one comparison.
+This always wins this game.
+
+Secondly the lecture states the following theorem: "No deterministic encryption scheme is CPA-secure".
+Since this encryption scheme is deterministic (latexmath:[G(k)_{0...k-1}]) will always be the same since latexmath:[G] is deterministic, this scheme can never be IND-POA secure.
+
+== Task 5.1 (iii)
+
+Yes, we can use the following proof:
+
+Assume we have a distinguisher latexmath:[D'] that can distinguish latexmath:[G(k)_{0...k-1}].
+Given a bit-string latexmath:[w] truncate it so we get latexmath:[w'=w_{0...k-1}].
+Call latexmath:[D'] with latexmath:[w'].
+If latexmath:[D'] returns 1 return 1 else return 0. With this we could distinguish latexmath:[G(k)].
+If latexmath:[w] was a random string of length latexmath:[l(k)] latexmath:[w_{0...k-1}] is also a random string of length k.
+If latexmath:[w] was a pseudo-random string then latexmath:[w_{0...k-1}]
+is latexmath:[G(k)_{0...k-1}].
+So latexmath:[D'] tries to find out if latexmath:[w_{0...k-1}] was pseudo random.
+If latexmath:[D'] can distinguish between them we can also distinguish the whole string, because if we can disinguish a part from the string as not random we can automatically distinguish the whole string as not random.
+Also if latexmath:[D'] is polynomial then latexmath:[D] is also polynomial
+
+This means that we can treat latexmath:[G(k)_{0...k-1}] the same as latexmath:[G(k)].
+So under the assumption that latexmath:[G] is a very good generator the lecture states that any encryption scheme
+using an XOR with latexmath:[G] is automatically IND-POA secure. So our scheme latexmath:[\Pi] is then IND-POA secure.
+
+== Task 5.2
+
+In general a block cipher should behave like a random permutation.
+To achieve this several steps are necessary.
+In the following we will look at the effects of removing one of the required steps of a SPN(Substitution Permutation Network).
+
+The basis of this is that it is expected for a SPN, that a change in one input bit affects in general around a half of the output bits (random permutation)
+
+== Task 5.2 (i)
+
+This step is needed because of the avalanche effect.
+A small change in the input must affect every bit of the output.
+The S-Boxes must be designed in such a way that changing a single bit of the input changes at least 2 bits in the output of the S-Box.
+If we take away this weakens the cipher severely, by "decreasing" the avalanche effect.
+This would negatively impact the security of the block cipher.
+It also would make differential cryptoanalysis "better", because it increases the differential probabilities in the pairs of plain/cipher-texts.
+
+== Task 5.3 (ii)
+
+This step is needed, because currently every byte would "stay" at the same row. This is unexpected of a random permutation.
+Because of this the cipher would no longer behave like a random permutation and with this attackable, because we could look at all rows separately. This is equal to
+decreasing the avalanche effect significantly.
+Because of this we need the ShiftRows step as integral part of the security of AES.
+
+== Task 5.2 (iii)
+
+This step is needed (as the one before), because currently if we change one input bit and only use SBOX and mixing round keys, a "local" change in the block does not affect any other bits in the block.
+The MixColumns step, assures that a change of input bits is "transmitted" between columns. If we would not do this
+we could "attack" every column separately, because they would not influence each other. The heuristic for this would be the avalanche effect again.
+Removing this step decreases it because of the reasons above.
+This step and the step before together build the permutation step, that is needed for SPNs.
+
+== Task 5.2 (iv)
+
+If we would remove this step, we have no other place where the key would be used (so no confusion).
+That would mean removing the key from our encryption scheme.
+This does not seem like an improvement, because any eavesdropper could just decrypt and obtain the plaintext.
+
+== Task 5.2 (v)
+
+Every step of AES is integral to the security of the cipher. Removing one of the steps would weaken the security of the cipher severely.
+This also means AES is already the simplest construction of a SPN-block cipher and cannot be reduced further without putting the security of the scheme itself at risk.
+
+This also shows, that the designers where very careful and precise in selecting the necessary steps for constructing such a SPN block cipher.
+

@@ -1,0 +1,123 @@
+:stem: latexmath
+
+= Exercise Sheet 6
+
+== Task 6.1
+We will use a proof by reduction/contra position:
+
+Let latexmath:[D] be a polynomial time bound attacker, against latexmath:[G(s)]
+then latexmath:[adv(G)=\frac{1}{2}|prob(D(G(s)) = 1)-prob(D(r) = 1)|]. Construct latexmath:[D']
+that attacks the PRF via the attacker latexmath:[D]. In the latexmath:[G^{\text{PRF}}], the
+attacker D has access to a pseudo random function latexmath:[W_{h_{prf}}] so D' chooses
+three messages latexmath:[w'_0,w'_1,w'_2] each different from each other and computes
+latexmath:[W_{h_{prf}}(w'_0)|W_{h_{prf}}(w'_1)|W_{h_{prf}}(w'_2)]. Now he calls
+latexmath:[D] with the result of that computation and outputs 1 if latexmath:[D] outputs 1
+and latexmath:[0] otherwise. latexmath:[D'] wins if and only if the attacker latexmath:[D] wins
+the game. So per definition since latexmath:[F] is a PRF latexmath:[adv(D')=\frac{1}{2}|prob(D(F_k(\cdot)) = 1) - prob(D(f(\cdot))=1)|].
+
+So if latexmath:[D] is a polynomial time bound attacker with a non negligible success probability so
+is latexmath:[D'] but this is a contradiction to our assumption/statement that latexmath:[F] is a PRF.
+
+This proves that latexmath:[G] is a pseudo random generator.
+
+== Task 6.2
+
+Game-hopping-lemma: latexmath:[adv^{G_0}(A)\leq adv^{G_1}(A)+2adv^{D}(R\circ A)]
+
+== Task 6.2 (i)
+
+This is clearly not IND-CPA secure. latexmath:[G(k)] is deterministic so latexmath:[G(k)|G(k+1)]
+is also deterministic, which means that it is not IND-CPA secure by theorem in the lecture.
+
+It also is not necessarily IND-POA secure. For this to be true latexmath:[G'(k)=G(k)|G(s+1)]
+would also need to fulfill the properties of a psuedo-random generator.
+Let latexmath:[G,H] be a secure pseudo random generators and latexmath:[G(k)=H(k_1,...,k_{n})|k_{n+1}] (this is a secure PRG but I will not prove this)
+then if latexmath:[k_{n+1}=0] latexmath:[G'(s)=H(k_1,...,k_{n})|0|H(k_1,...,k_{n})|1] because only the last bit is different.
+So a distinguisher latexmath:[\mathcal{D}] only has to check latexmath:[w_0...w_{n}=w_{n+1}...w_{2n}] and there for
+we have a non negligible winning probability of latexmath:[\frac{1}{2}|(1-2^{-n})|] which is not negligible.
+
+With this we can construct an efficient PPT attacker against latexmath:[\Pi] in the IND-POA game as follows:
+
+1. latexmath:[\mathcal{A}] chooses two messages latexmath:[m_0,m_1] both different from each other
+2. latexmath:[\mathcal{A}] calls the oracle to obtain latexmath:[c^{*}]
+3. He calculates latexmath:[c^{*} \oplus m_0] and calls latexmath:[D] with this.
+4. If D returns 1 return 1 else 0
+
+Why does this prove this is not IND-POA secure? Because since latexmath:[D] outputs 1
+with a non negligible probability in case latexmath:[c^{*}] was the encryption of latexmath:[m_0].
+This in turn translates to a non negligible success probability for our attacker latexmath:[\mathcal{A}],
+because he can effectively distinguish the encryption of latexmath:[m_0] from the encryption of latexmath:[m_1].
+
+With this we have shown that this scheme can be insecure even if latexmath:[G] is a secure PRG.
+
+== Task 6.2 (ii)
+
+This scheme is insecure. The algorithm latexmath:[G] is public and accessible to the attacker under
+Kerckhoffs principles. So the attacker can just do the following and win the IND-POA security game in polynomial time:
+
+Calculate latexmath:[G(r)]. Use it to decrypt the cipher text :
+latexmath:[m = c \oplus G(r)]. Return latexmath:[0] if latexmath:[m=m_0] else return 1.
+This always wins the game.
+
+Also this does not use any secret so it cannot really be secure under Kerckhoffs principles.
+
+== Task 6.3 (iii)
+This scheme is deterministic, so it can never be IND-CPA secure. But it is IND-POA secure
+for the encryption of one message:
+
+Use proof by game-hopping lemma:
+
+Let latexmath:[G_1] be the IND-POA game with the scheme denoted by exercise statement. Let latexmath:[G_2] be the
+IND-POA game with a truly random function latexmath:[f(0^{\kappa})]. This function is uniformly distributed, so we get a One-time-pad.
+Now we use the latexmath:[G^{\text{PRF}}] as bridge and will argue that the difference between latexmath:[G_1] and latexmath:[G_2] is negligible.
+Since the probability in latexmath:[G_2] (One-Time-Pad) is also negligible we will prove that latexmath:[G_1] the
+advantage of the attacker latexmath:[A] in latexmath:[G_1] is bounded by these two as stated above in the lemmas definition.
+
+Use the following Reduction (in this case a distinguisher latexmath:[D]):
+
+1. choose latexmath:[h_r \leftarrow \{0,1\}^{k}] and a random message latexmath:[m_{h_r}]
+2. set latexmath:[c \leftarrow O(m_1,m_2)] as latexmath:[m_{h_r} \oplus W_{h_{\text{PRF}}}(0^{\kappa})]
+3. Run latexmath:[A] with latexmath:[1^{\kappa}] and the prepared oracle. Await latexmath:[h'_r]
+4. If latexmath:[h'_r=h_r] output 1 else 0
+
+If latexmath:[W_{h_{\text{PRF}}}] is the truly random function latexmath:[D] answers exactly with latexmath:[prob=\frac{1}{2}],
+since the attacker is a guessing attacker.
+Now since latexmath:[F] is a PRF for a uniformly random latexmath:[k] we get that the probability of D is 
+negligible, since we argue that since latexmath:[F] is a PRF A is not able to notice significant difference between encryptions with latexmath:[F] or latexmath:[f].
+The reason for this is, that assuming our reduction wins the game with a non negligible success probability, we could distinguish
+latexmath:[F] from latexmath:[f] which is a contradiction to our assumption that latexmath:[F] is PRF.
+
+With this we get that latexmath:[adv^{G_1}(A)] is negligible and that latexmath:[adv^{D}(R \circ A)]
+is negligible. So with this we get that latexmath:[adv^{G_0}(A)] is bound by two negligible properties so it
+by itself is also negligible. With this we have proven, that the scheme given in the exercise is IND-POA secure.
+
+== Task 6.2 (iv)
+
+Since we are trying to prove IND-CPA security, we have to use an attacker in the IND-POA game.
+
+As latexmath:[G_0] we select the LOR-CPA game with the construction described in the exercise statement.
+As latexmath:[G_1] we select the LOR-CPA game with a concatenation of two truly random strings, so a OTP with the length latexmath:[\{0,1\}^{2\kappa}].
+
+We now construct the following reduction in the Game PRF. We use this game as a "bridge" to show that the difference between
+latexmath:[G_0] and latexmath:[G_1] is indistinguishable for an PPT attacker latexmath:[A].
+
+latexmath:[G^{\text{PRF}}] is our bridge:
+
+Reduction latexmath:[R]
+
+1. Choose latexmath:[h_r \leftarrow \{0,1\}] randomly
+2. Define latexmath:[\mathcal{O}_{\text{LOR}}(m_0,m_1)]
+  -  Choose latexmath:[r \leftarrow \{0,1\}^{\kappa}] uniformly random
+  -  return latexmath:[r, m_{h_r} \oplus W_{hprf}(r)|W_{hprf}(r+1)]
+3. Call the attacker latexmath:[\mathcal{A}] with the oracle and latexmath:[1^{\kappa}] await latexmath:[h']
+4. If latexmath:[h_r=h'_r] return 1 else return 0.
+
+In the case of latexmath:[h_{r}=0] the attacker plays against our original scheme latexmath:[\Pi].
+latexmath:[\mathcal{A}], so the answer is correct iff A wins the LOR game.
+
+In case latexmath:[h_{\text{PRF}}=1] the attacker works with a one-time-pad as long as latexmath:[r]
+never repeats. Since the latexmath:[adv] is negligible in this case and our reduction also only notices a negligible difference
+we can assume that latexmath:[adv^{G_0}] is also negligible.
+
+Since LOR-CPA implies IND-CPA this proves that latexmath:[\Pi] is IND-CPA secure.
+
