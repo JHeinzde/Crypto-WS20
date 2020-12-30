@@ -1,0 +1,3 @@
+:stem: latexmath
+
+= Exercise Sheet 8

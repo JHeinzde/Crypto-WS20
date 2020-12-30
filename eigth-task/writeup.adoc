@@ -1,0 +1,142 @@
+:stem: latexmath
+
+= Exercise Sheet 8
+
+== Task 8.1 (i)
+
+We can prove this by assuming that the new encryption scheme latexmath:[\Pi_*] is not secure meaning there is a PPT attacker latexmath:[\mathcal{A}_*] that breaks the IND-CPA security of the scheme.
+If so we now could break the secure scheme we have using the following reduction to win the IND-CPA game himself:
+
+Construct the following oracle latexmath:[\mathcal{O}_{\text{Enc}_*}] and latexmath:[\mathcal{O}_{\text{Test}_*}]:
+
+latexmath:[\mathcal{O}_{\text{Enc}_*}]:
+
+1. Given a message substitute 0 by 00 and 1 by 01 or 10 randomly to get latexmath:[m'].
+2. Call our own oracle latexmath:[\mathcal{O}_{\text{Enc}}(m')] to get latexmath:[c]
+3. return latexmath:[c] to the caller
+
+latexmath:[\mathcal{O}_{\text{Test}_*}]:
+
+1. As above substitute any 0 by 00 and 1 by 01 or 10 in the messages latexmath:[m_0,m_1] given by the attacker
+2. Call our own oracle latexmath:[\mathcal{O}_{\text{Test}}] with the messages latexmath:[m_0',m_1'] to get latexmath:[c*]
+3. return latexmath:[c*] to the caller.
+
+Now we call the successful attacker latexmath:[\mathcal{A}] with these oracles and await his guess latexmath:[h']
+Return what the attacker outputs.
+
+Now we have to make some observations: First our success probability is the probability that latexmath:[\mathcal{A}]
+wins the game, since we win when the attacker wins.
+Also the attacker has no noticeable difference, because he gets an encryption of the new scheme, which is what he expects.
+So iff latexmath:[\mathcal{A}] wins with a non-negligible success probability we will too. Furthermore we
+will call our own oracles the same amount of times that latexmath:[\mathcal{A}] does. So
+if latexmath:[\mathcal{A}] is polynomial we are polynomial.
+
+
+With this we have proven the proposition.
+
+== Task 8.1 (ii)
+
+- A: If the original bit was 0 and we flipped a bit pair, that corresponds to a 00 in the encryption of the ciphertext which now will be 11 and with that 1, we get a rejection from the recipient.
+This is because the MAC verification will now fail.
+- B: If the original bit was 1 and we flipped a bit pair, that either corresponds to 01, 10 respectively the recipient will accept the message.
+This is because 01 and 10 are the inverses of each other, so if we invert one of them we still get a one bit.
+As far as I can see the case of 11 can never occur, since we will substitute simultaneously. 11 Can only occur in a non-aligned pair and with that there should never be any validation error.
+
+With this Rudiger basically has an oracle that he can ask if the bit was 1 or 0. If he now begins to flip bitpairs, beginning at latexmath:[c_0] (where it denotes the 0 bit pair)
+he should at most have to query the recipient latexmath:[\frac{|c|}{2}] times.
+
+== Task 8.1 (iii)
+
+Now lets try to take the strategy above and derive an efficient PPT-Attacker latexmath:[\mathcal{A}]
+against the CCA-Security of our composed scheme:
+
+1. Generate two messages latexmath:[m_0 \leftarrow 0^{\kappa},m_1 \leftarrow 1^{\kappa}]
+2. Do latexmath:[c \leftarrow \mathcal{O}_{\text{Test}}(m_0, m_1)]
+3. Now flip independent bit pairs beginning from pair latexmath:[p_0] and call latexmath:[\mathcal{O}_{\text{Dec}}(c')].
+4. If the decryption oracle rejects our message we know that we got a wrong bitpair go to step 3 and flip the next pair.
+5. If we get back the decryption compare it to latexmath:[m_0]. If it is latexmath:[m_0] return 0 else 1.
+
+How long does this algorithm take? Well it flips at max latexmath:[|m|] bit pairs. With that the decryption oracle is
+called at most latexmath:[|m|] times. Most importantly it is NEVER called with latexmath:[c'=c]!.
+
+With that the running time is at most latexmath:[\mathcal{O}(|m|\cdot \mathcal{O_{\text{Dec}}})].
+
+It also will obtain the original message either by going through the entire message, or the first time a 1 is encountered.
+Why? Because if a 1 is encountered the latexmath:[\mathcal{O}_{\text{Dec}}] returns the decryption of the original message.
+
+With that we have constructed a PPT attacker latexmath:[\mathcal{A}] that can always win the IND-CCA game making meaningful
+use of the decryption oracle.
+
+== Task 8.1 (iv)
+
+No that would actually not be better. Since all schemes are public the attacker knows the length of
+latexmath:[c] and the length of the tag latexmath:[t]. He can just split the message and manipulate latexmath:[c]
+the same way as above to obtain the password, since there is no integrity check on the transmitted cipher text.
+To actually use the encryption scheme stated in the exercise one would have to do encrypt-then-authenticate, because the
+problem here is that a manipulated ciphertext does not lead to a rejection of the message by the MAC algorithm.
+
+== Task 8.2 (i)
+
+I will formulate the game of INT-CTXT in terms we have used in our lecture:
+
+1. Generate a key latexmath:[k \leftarrow \text{KeyGen}(1^{\kappa})]
+2. Define an encryption oracle latexmath:[\mathcal{O}_{\text{Enc}}]:
+  - Given latexmath:[m] calculate latexmath:[c* \leftarrow \text{Enc}_{k}(m)]
+  - Return latexmath:[c*]
+3. Define a verification oracle latexmath:[\mathcal{O}_{\text{Vrfy}}]
+  - Given latexmath:[c'] Calculate latexmath:[m' \leftarrow \text{Dec}_{k}(c')]
+  - If latexmath:[m' = \text{Fail}] return FAIL else return SUCCESS.
+4. Call the attacker latexmath:[\mathcal{A}] with latexmath:[\mathcal{O}_{\text{Enc}},\mathcal{O}_{\text{Dec}}] and the security paramter.
+5. Await a ciphertext latexmath:[c'] from latexmath:[\mathcal{A}]
+6. If latexmath:[c'] was not produced by latexmath:[\mathcal{O}_{\text{Enc}}] ACCEPT else REJECT
+
+The idea of this is that no PPT attacker can produce a valid cipher text that was originally produced by the encryption oracle.
+That means no PPT attacker can forge arbitrary ciphertexts without help of the encryption oracle.
+
+== Task 8.2 (ii)
+
+I chose EtA or in terms of the paper EtM. The authors first prove that any adversary against the
+composed schema of mac and encryption could break the IND-CPA security of the encryption (Theorem 4.3). Furthermore
+they also prove, that any attacker against the INT-PTXT (a weaker notion than INT-CTXT) of the MAC could
+also break the unforgable-chosen-message property of the MAC. EUF-CMA is a weaker notion than sEUF-CMA. sEUF-MAC corresponds
+to SUF-MAC in the paper. Then the authors prove, that an attacker against the notion of INT-CTXT described above
+against a MAC is also an attacker against the sEUF-CMA property of the MAC. That means that INT-CTXT implies
+sEUF-CMA security (Theorem 4.4).
+
+They now combine these two results via theorem 3.2: Since they have proven that the scheme has IND-CPA security in 4.3,
+the proof 4.4 with theorem 3.2 immediately proves that the EtA scheme is IND-CCA secure. So they use Theorem 3.2
+to prove that EtA is IND-CCA secure.
+
+== Task 8.2 (iii)
+
+In IPSEC not the complete message is encrypted. The following pictures are taken from the RFC
+of IPSEC [1]:
+
+
+                 BEFORE APPLYING ESP
+            ----------------------------
+      IPv4  |orig IP hdr  |     |      |
+            |(any options)| TCP | Data |
+            ----------------------------
+
+                 AFTER APPLYING ESP
+            -------------------------------------------------
+      IPv4  |orig IP hdr  | ESP |     |      |   ESP   | ESP|
+            |(any options)| Hdr | TCP | Data | Trailer |Auth|
+            -------------------------------------------------
+                                |<----- encrypted ---->|
+                          |<------ authenticated ----->|
+
+
+As we can see here the ESP header is not encrypted and only authenticated. This means not all data sent
+is private. In IPSec this is not a problem because the data in the IPSec header does not need to be private.
+
+So now let's assume that the block cipher behaves like a PRF, then this could be IND-CCA secure, provided that
+the data in the unencrypted part never needs any privacy. The scheme is only IND-CCA secure if the MAC is
+sEUF-CMA secure, because this is a prerequisite for IND-CCA security. According to our lecture tough only EUF-CMA security is
+guaranteed.
+
+
+
+[1] https://tools.ietf.org/html/rfc2406 S. Kent November 1998 page 8.
+

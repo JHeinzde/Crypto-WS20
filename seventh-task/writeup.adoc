@@ -1,0 +1,89 @@
+:stem: latexmath
+
+= Exercise Sheet 7
+
+== Task 7.1
+
+Construct the following scheme latexmath:[\Pi_2]: We try to use "secret-sharing". Also we try to emulate an OTP to construct our
+new cipher.
+
+1. Generate two keys latexmath:[k_0\leftarrow\text{Gen}_0(1^{\kappa})] and latexmath:[k_1\leftarrow\text{Gen}_1(1^{\kappa})]
+2. Given latexmath:[k=(k_1,k_2)] our latexmath:[\text{Enc}] chooses latexmath:[r\leftarrow\{0,1\}^{|m|}] and computes
+latexmath:[c=(\text{Enc}_{0k_0}(m\oplus r), \text{Enc}_{1k_1}(r))]
+3. Decryption is implemented in the following way: Given latexmath:[k=(k_0,k_1)] and latexmath:[c_0,c_1]
+output latexmath:[\text{Dec}_{0k_0}(c_1)\oplus \text{Dec}_{1k_1}(c_2)]
+
+This stated encryption scheme is IND-CPA secure as long as one of the ciphers latexmath:[\Pi_0,\Pi_1] is IND-CPA
+secure.
+
+I will prove that if latexmath:[\Pi_0] is IND-CPA secure latexmath:[\Pi_2] is IND-CPA secure, by Reduction for a successful attacker latexmath:[\mathcal{A}] in
+the IND-CPA game against latexmath:[\Pi_2].
+
+Assume we have latexmath:[\mathcal{A}] who is a polynomial time bound attacker attacking
+latexmath:[\Pi_2]. His advantage is latexmath:[|prob(G^{\text{IND-CPA}}(\mathcal{A})=ACCEPT)-\frac{1}{2}|].
+
+Now lets construct an attacker latexmath:[\mathcal{A}'] that attack latexmath:[\Pi_1]:
+latexmath:[\mathcal{A}'] chooses latexmath:[k_1\leftarrow \text{Gen}(1^{\kappa})].  He also
+prepares the following oracle latexmath:[\mathcal{O}_{\text{Enc}}]:
+
+* Choose latexmath:[r\leftarrow \{0,1\}^{n}] uniformly at random and a message latexmath:[m_1]
+* Query his own oracle for latexmath:[c_0 \leftarrow \mathcal{O}_{\text{Enc}_0}(m \oplus r)]
+* Calculate latexmath:[c_1=\text{Enc}_{1k_1}(r)]
+* return latexmath:[c=(c_0,c_1)]
+
+He also prepares an oracle latexmath:[\mathcal{O}_{\text{Test}}]:
+
+* When called with latexmath:[m_0,m_1] (both with the same length) choose latexmath:[r \leftarrow \{0,1\}^{|m_0|}]
+* Call latexmath:[c^{*} \leftarrow \mathcal{O}_{\text{Test}_0}(m_0 \oplus r, m_1 \oplus r)]
+* Calculate latexmath:[c^{*}_1=\text{Enc}_{1k_1}(r)]
+* Return latexmath:[c=(c^{*},c^{*}_1)]
+
+
+Now he calls latexmath:[\mathcal{A}] with the oracles and the security parameter. If
+latexmath:[\mathcal{A}] outputs latexmath:[h'_{\text{2}}=1] output 1 else 0.
+
+latexmath:[\mathcal{A}] has the same view as latexmath:[\mathcal{A'}] in this game, even tough
+the encryption is dependent on two messages. This is because latexmath:[\mathcal{A}] only sees
+one of the messages encrypted. With this we get latexmath:[prob(G^{\text{IND-CPA}}_{\Pi_0}(\mathcal{A}')=1|h=0)=prob(G^{\text{IND-CPA}}_{\Pi_2}(\mathcal{A})=1|h=0)]
+as well as latexmath:[prob(G^{\text{IND-CPA}}_{\Pi_0}(\mathcal{A}')=1|h=1)=prob(G^{\text{IND-CPA}}_{\Pi_2}(\mathcal{A})=1|h=1)].
+Now because latexmath:[\Pi_0] is IND-CPA secure with the above equations this translates to negligible
+advantage for the attacker against latexmath:[\Pi_2] with this we have proven that the scheme is IND-CPA secure
+if latexmath:[\Pi_0] is IND-CPA secure.
+
+For latexmath:[\Pi_1] we can construct the following oracles:
+
+Generate latexmath:[k_0 \leftarrow \text{Gen}(1^{\kappa})]
+Also choose latexmath:[h'_1 \leftarrow \{0,1\}] which will be important later
+
+latexmath:[\mathcal{O}_{\text{Enc}}]:
+
+* Choose latexmath:[r\leftarrow \{0,1\}^{n}] uniformly at random and a message latexmath:[m_0]
+* Query his own oracle for latexmath:[c_1 \leftarrow \mathcal{O}_{\text{Enc}_1}(r)]
+* Calculate latexmath:[c_0=\text{Enc}_{0k_0}(r \oplus m)]
+* return latexmath:[c=(c_0,c_1)]
+
+latexmath:[\mathcal{O}_{\text{Test}}]:
+
+* When called with latexmath:[m_0,m_1] (both with the same length) choose latexmath:[r_0 \leftarrow \{0,1\}^{|m_0|}]
+and latexmath:[r_1 \leftarrow \{0,1\}^{|m_0|}]
+* Call latexmath:[c^{*} \leftarrow \mathcal{O}_{\text{Test}_1}(r_0,r_1)]
+* Calculate latexmath:[c^{*}_0=\text{Enc}_{0k_0}(m_{h'_0} \oplus r_{h'_0})]
+* Return latexmath:[c=(c^{*}_0,c^{*})]
+
+Now call latexmath:[\mathcal{A}] with the oracles and await his guess latexmath:[h'_2].
+If latexmath:[h'_2=h'_0] return latexmath:[h'_2] else return the
+opposite of latexmath:[h'_0]. Why does this work? Because if latexmath:[\mathcal{A}] outputs the same h as we have chosen he was able to distinguish this
+with a non-negligible probability which also means that our own test oracle returned the encryption of latexmath:[h'_0] with a non-negligible probability.
+
+== Task 7.2
+
+So if we drop the length restriction for the CBC-MAC, we can compute a MAC for the message latexmath:[m] by
+dropping it into the CBC-MAC: latexmath:[t=\text{Mac}(m)]. Incidentally this would be
+the same as doing the following: latexmath:[t_1=\text{Mac}(m^{(0)})] then we split latexmath:[m^{(1)}] into blocks of size
+latexmath:[m^{(1)}_0|...|m^{(1)}_{\mathcal{l(k)}} \text{ with } m_i \in \{0,1\}^{\kappa}]. With this we do
+latexmath:[m'^{(1)}=m^{(1)}_0 \oplus t_1 | m^{(1)}_0 | ... |m^{(1)}_{\mathcal{l(k)}}]. We then compute latexmath:[t_2=\text{Mac}(m'^{(1)})]. Since the IV for the CBC-MAC
+is always 0 we get that the input for the first calculation of the CBC-MAC is exactly latexmath:[t_2]. This means
+that latexmath:[t_2=t]. With this an attacker latexmath:[\mathcal{A}] can always construct a valid forgery in the EUF-CMA
+game, since he never needs to call the oracle with the real message latexmath:[m] but calls it with latexmath:[m^{(0)}]
+and latexmath:[m'^{(1)}]. Since the attacker can always win the game with the strategy above
+the CBC-MAC with no length restriction can't be EUF-CMA secure.
